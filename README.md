@@ -1,229 +1,217 @@
-# Food Delivery System - Food Hub
+# FoodHub — Frontend
+
+<div align="center">
+
+![Next.js](https://img.shields.io/badge/Next.js-15-000000?style=for-the-badge&logo=next.js&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+![Radix UI](https://img.shields.io/badge/Radix_UI-161618?style=for-the-badge&logo=radix-ui&logoColor=white)
+![Socket.io](https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socket.io&logoColor=white)
+![Google Maps](https://img.shields.io/badge/Google_Maps-4285F4?style=for-the-badge&logo=google-maps&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+
+A modern, responsive food delivery web application built with Next.js 15 and React 19 — featuring real-time delivery tracking, multi-role dashboards, and Google Maps integration.
+
+</div>
+
+---
 
 ## Table of Contents
-- [1. Prerequisites](#1-prerequisites)
-- [2. Backend Setup](#2-backend-setup)
-- [3. Kubernetes Deployment](#3-kubernetes-deployment)
-- [4. Frontend Setup](#4-frontend-setup)
-- [5. Verify Installation](#5-verify-installation)
-- [6. Troubleshooting](#6-troubleshooting)
 
-## 1. Prerequisites
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [App Structure](#app-structure)
+- [Role-Based Dashboards](#role-based-dashboards)
+- [Getting Started](#getting-started)
+- [Environment Variables](#environment-variables)
+- [Docker](#docker)
 
-Ensure you have the following tools installed on your system:
+---
 
-- Git
-- Docker Desktop
-- kubectl (Kubernetes command-line tool)
-- minikube (for local Kubernetes cluster) or access to a Kubernetes cluster
-- Node.js and npm (for frontend development)
+## Features
 
-## 2. Backend Setup
+- **Multi-Role Authentication** — Separate dashboards for customers, restaurant owners, delivery personnel, and admins
+- **OTP Verification** — Email and SMS one-time password flow for secure registration
+- **Google OAuth** — Sign in with Google support
+- **Restaurant Discovery** — Browse and search restaurants, view menus with nutritional info
+- **Cart & Checkout** — Persistent cart with Stripe payment integration and cash on delivery option
+- **Real-Time Delivery Tracking** — Live map view of the delivery courier's GPS location via Socket.io
+- **Google Maps Integration** — Interactive location picker and delivery route visualization
+- **Restaurant Owner Dashboard** — Manage restaurants, menus, orders, and availability in real time
+- **Admin Dashboard** — System-wide management of users, restaurants, orders, and transactions
+- **Delivery Dashboard** — Couriers accept, update, and complete deliveries with live location broadcasting
+- **Responsive Design** — Fully mobile-friendly UI built with Tailwind CSS and Radix UI
 
-### 2.1 Clone the Repository
+---
 
-```bash
-git clone https://github.com/IT22056320/food-delivery-system-backend.git
-cd food-delivery-system-backend
+## Tech Stack
+
+| Category | Technology |
+|---|---|
+| Framework | Next.js 15.2.4 (App Router) |
+| UI Library | React 19 |
+| Styling | Tailwind CSS 4 |
+| Components | Radix UI (headless, accessible primitives) |
+| Maps | Google Maps API, Leaflet Routing Machine |
+| Real-Time | Socket.io Client |
+| State | React Context API + Custom Hooks |
+| HTTP Client | Native Fetch API |
+| Containerization | Docker |
+
+---
+
+## App Structure
+
+```
+app/
+├── page.jsx                          # Landing page
+├── login/                            # Login
+├── register/                         # Registration
+├── verify-otp/                       # OTP verification
+├── forgot-password/                  # Password reset
+├── home/                             # Home after login
+└── dashboard/
+    ├── user/                         # Customer dashboard
+    │   ├── page.jsx                  # Overview
+    │   ├── restaurants/              # Browse restaurants & menus
+    │   ├── orders/                   # Order history & detail
+    │   ├── checkout/                 # Checkout flow
+    │   └── [id]/track/              # Live delivery tracking map
+    ├── restaurant/                   # Restaurant owner dashboard
+    │   ├── my-restaurants/           # Manage restaurants
+    │   ├── create/                   # Create new restaurant
+    │   ├── edit/[id]/               # Edit restaurant
+    │   ├── menu/                     # Menu management
+    │   ├── orders/                   # Incoming orders
+    │   └── settings/                 # Restaurant settings
+    ├── delivery/                     # Delivery person dashboard
+    └── admin/                        # Admin dashboard
+        ├── users/                    # Manage users
+        ├── restaurants/              # Manage all restaurants
+        ├── orders/                   # All orders
+        └── transactions/             # Payment transactions
+
+components/
+├── delivery-map.jsx                  # Live delivery map (Leaflet)
+├── delivery-tracker.jsx              # Real-time tracking component
+├── location-picker.jsx               # Google Maps location selector
+├── google-maps-loader.jsx            # Maps API loader
+├── admin-sidebar.jsx                 # Admin navigation
+└── ui/                               # Radix UI components
+
+context/
+└── auth-context.jsx                  # Auth state + role flags
+
+hooks/
+├── use-auth.js                       # Authentication hook
+├── use-cart.js                       # Cart management (localStorage)
+├── use-mobile.js                     # Responsive detection
+└── use-toast.js                      # Toast notifications
+
+lib/
+├── api.js                            # Auth & order API calls
+├── restaurant-api.js                 # Restaurant API calls
+├── delivery-api.js                   # Delivery API calls
+└── utils.js                          # Utility helpers
 ```
 
-### 2.2 Configure Secret Files
+---
 
-Each microservice requires configuration via secret YAML files. Template files are provided, but you need to set up your own secret values.
+## Role-Based Dashboards
 
-1. Navigate to each microservice directory and copy the template secret files:
+### Customer (`/dashboard/user`)
+Browse restaurants, add items to cart, place orders with card or cash, and track deliveries live on a map.
 
-```bash
-# For auth-service
-cp k8s/auth-service/auth-secrets.yaml.template k8s/auth-service/auth-secrets.yaml
+### Restaurant Owner (`/dashboard/restaurant`)
+Create and manage restaurants, build menus with nutritional details, toggle item availability, and manage incoming orders through their full lifecycle.
 
-# For order-service
-cp k8s/order-service/order-secrets.yaml.template k8s/order-service/order-secrets.yaml
+### Delivery Person (`/dashboard/delivery`)
+View assigned orders, accept deliveries, broadcast GPS location in real time, and mark orders as picked up or delivered.
 
-# For restaurant-service
-cp k8s/restaurant-service/restaurant-secrets.yaml.template k8s/restaurant-service/restaurant-secrets.yaml
+### Admin (`/dashboard/admin`)
+Full system oversight — view and manage all users, restaurants, orders, and payment transactions across the platform.
 
-# For delivery-service
-cp k8s/delivery-service/delivery-secrets.yaml.template k8s/delivery-service/delivery-secrets.yaml
+---
 
-# For payment-service
-cp k8s/payment-service/payment-secrets.yaml.template k8s/payment-service/payment-secrets.yaml
+## Getting Started
 
-# For notification-service
-cp k8s/notification-service/notification-secrets.yaml.template k8s/notification-service/notification-secrets.yaml
-```
+### Prerequisites
 
-2. Edit each secrets file with your configuration values (database credentials, API keys, etc.)
+- [Node.js 18+](https://nodejs.org/)
+- npm
+- The [FoodHub Backend](https://github.com/IT22056320/food-delivery-system-backend) running (locally or via Kubernetes)
 
-## 3. Kubernetes Deployment
-
-### 3.1 Start Your Kubernetes Cluster
-
-If using minikube:
-
-```bash
-minikube start
-```
-
-### 3.2 Apply Kubernetes Configurations
-
-Deploy all services with a single command:
-
-```bash
-kubectl apply -f k8s/
-```
-
-Alternatively, you can deploy services individually:
-
-```bash
-# Deploy auth service
-kubectl apply -f k8s/auth-service/
-
-# Deploy order service
-kubectl apply -f k8s/order-service/
-
-# Deploy restaurant service
-kubectl apply -f k8s/restaurant-service/
-
-# Deploy delivery service
-kubectl apply -f k8s/delivery-service/
-
-# Deploy payment service
-kubectl apply -f k8s/payment-service/
-
-# Deploy notification service
-kubectl apply -f k8s/notification-service/
-```
-
-### 3.3 Verify Deployments
-
-Check if all pods are running:
-
-```bash
-kubectl get pods
-```
-
-Check services:
-
-```bash
-kubectl get services
-```
-
-### 3.4 Set Up Ingress
-
-Apply the ingress configuration:
-
-```bash
-kubectl apply -f k8s/restaurant-service/ingress.yaml
-```
-
-If using minikube, enable the ingress addon:
-
-```bash
-minikube addons enable ingress
-```
-
-## 4. Frontend Setup
-
-### 4.1 Clone the Frontend Repository
+### Install & Run
 
 ```bash
 git clone https://github.com/IT22056320/food-delivery-system-frontend.git
 cd food-delivery-system-frontend
-```
-
-### 4.2 Install Dependencies
-
-```bash
 npm install
 ```
 
-### 4.3 Configure Environment Variables
-
-Copy the template environment file and modify it with your backend API endpoints:
+Copy the environment template and configure your values:
 
 ```bash
 cp .env.template .env.local
 ```
 
-Edit `.env.local` to match your Kubernetes service endpoints.
-
-### 4.4 Run the Frontend Development Server
+Start the development server:
 
 ```bash
 npm run dev
 ```
 
-The frontend will be available at `http://localhost:3000`.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## 5. Verify Installation
-
-### 5.1 Test Backend Services
-
-Verify that each microservice is accessible:
+### Build for Production
 
 ```bash
-# Get the URL for accessing the services
-kubectl get ingress
-
-# Test auth service
-curl http://<ingress-address>/api/auth/health
-
-# Test order service
-curl http://<ingress-address>/api/orders/health
-
-# Test restaurant service
-curl http://<ingress-address>/api/restaurants/health
-
-# Test delivery service
-curl http://<ingress-address>/api/delivery/health
-
-# Test payment service
-curl http://<ingress-address>/api/payments/health
-
-# Test notification service
-curl http://<ingress-address>/api/notifications/health
+npm run build
+npm start
 ```
 
-### 5.2 Access the Frontend
+---
 
-Open your browser and navigate to `http://localhost:3000` to access the food hub frontend.
+## Environment Variables
 
-## 6. Troubleshooting
+Create a `.env.local` file in the project root with the following variables:
 
-### 6.1 Check Kubernetes Pod Logs
+```env
+# Backend API base URL (Kubernetes ingress or local)
+NEXT_PUBLIC_API_URL=http://localhost
 
-If a service is not working correctly, check its logs:
+# Individual service URLs (used when calling services directly)
+NEXT_PUBLIC_AUTH_SERVICE_URL=http://localhost:5000
+NEXT_PUBLIC_RESTAURANT_SERVICE_URL=http://localhost:5001
+NEXT_PUBLIC_ORDER_SERVICE_URL=http://localhost:5002
+NEXT_PUBLIC_DELIVERY_SERVICE_URL=http://localhost:5003
+
+# Google Maps
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+```
+
+---
+
+## Docker
+
+A `Dockerfile` is included for containerized deployment.
 
 ```bash
-# List all pods
-kubectl get pods
+# Build the image
+docker build -t foodhub-frontend .
 
-# View logs for a specific pod
-kubectl logs <pod-name>
+# Run the container
+docker run -p 3000:3000 --env-file .env.local foodhub-frontend
 ```
 
-### 6.2 Check Kubernetes Events
+---
 
-```bash
-kubectl get events
-```
+## Related Repository
 
-### 6.3 Common Issues
+[FoodHub Backend](https://github.com/IT22056320/food-delivery-system-backend) — Node.js microservices with Express, MongoDB, Docker, and Kubernetes.
 
-- **Secret Configuration**: Ensure all secret files are properly configured with valid credentials.
-- **Network Connectivity**: Verify that services can communicate with each other and with any external dependencies.
-- **Resource Constraints**: Check if your Kubernetes cluster has sufficient resources to run all services.
-- **Ingress Setup**: Confirm that the ingress controller is properly configured and running.
+---
 
-### 6.4 Rebuilding Services
-
-If you need to rebuild and redeploy a service:
-
-```bash
-# Delete the deployment
-kubectl delete deployment <service-name>
-
-# Apply the configuration again
-kubectl apply -f k8s/<service-name>/
-```
+<div align="center">
+Built with Next.js · React · Tailwind CSS · Socket.io · Google Maps
+</div>
